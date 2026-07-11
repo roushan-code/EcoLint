@@ -1,40 +1,31 @@
 /**
  * Carbon Estimator Interface
  * 
- * This interface defines the contract for carbon estimation.
- * It allows for easy replacement of the formula-based estimator
- * with an ML model in the future.
- * 
- * @example
- * ```typescript
- * // Using formula estimator (default)
- * const estimator = new FormulaCarbonEstimator(450);
- * const result = estimator.estimate(1000, 50, 128);
- * 
- * // Later, replace with ML model
- * const mlEstimator = new MLCarbonEstimator(modelPath);
- * const result = mlEstimator.estimate(1000, 50, 128);
- * ```
+ * Defines the contract for carbon estimation implementations.
+ * This interface allows for different estimation strategies (formula-based, ML-based, etc.)
  */
 
 import { CarbonEstimate } from '../types/benchmark';
 
 /**
- * Interface for carbon footprint estimation
+ * Carbon Estimator Interface
  * 
- * Implementations can use different methods:
- * - Formula-based (deterministic)
- * - ML-based (trained model)
- * - Hardware-specific measurements
+ * Implementations of this interface provide carbon footprint estimation
+ * based on benchmark execution metrics.
  */
 export interface CarbonEstimator {
   /**
    * Estimate carbon footprint from benchmark metrics
    * 
    * @param runtimeMs - Execution time in milliseconds
-   * @param cpuPercent - Average CPU usage percentage (0-100)
-   * @param memoryMB - Peak memory usage in megabytes
-   * @returns CarbonEstimate with power, energy, and carbon values
+   * @param cpuPercent - Average CPU usage percentage
+   * @param memoryMB - Peak memory usage in MB
+   * @returns Carbon estimate with power, energy, and carbon values
    */
   estimate(runtimeMs: number, cpuPercent: number, memoryMB: number): CarbonEstimate;
+
+  /**
+   * Get the name of the estimation method
+   */
+  getMethodName(): string;
 }

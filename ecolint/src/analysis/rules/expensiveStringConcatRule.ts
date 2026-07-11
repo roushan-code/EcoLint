@@ -2,6 +2,7 @@
  * Detects expensive string concatenation patterns
  */
 
+import * as ts from 'typescript';
 import { BaseRule } from './baseRule';
 import { RuleContext, Finding } from '../types';
 
@@ -13,86 +14,67 @@ export class ExpensiveStringConcatRule extends BaseRule {
   detect(context: RuleContext): Finding[] {
     const findings: Finding[] = [];
 
-    context.sourceFile.forEachDescendant((node: any) => {
-      const kind = node.getKindName?.() || '';
+    const checkNode = (node: ts.Node): void => {
+      if (ts.isBinaryExpression(node)) {
+        const operator = node.operatorToken.kind;
 
-      // Check for += in loops
-      if (kind === 'BinaryExpression') {
-        const operator = node.getOperatorToken?.()?.getText?.();
-        if (operator === '+=' || operator === '=') {
-          const left = node.getLeft?.();
-          const right = node.getRight?.();
-          
-          if (left && right) {
-            const leftText = left.getText?.() || '';
-            const rightText = right.getText?.() || '';
-            
-            // Check if it's string concatenation in a loop
-            if (this.isInLoop(node) && (leftText.includes('+') || rightText.includes('+'))) {
-              findings.push(this.createFinding(
-                context,
-                'String concatenation in loop detected - use array join or template literals',
-                node,
-                'Use StringBuilder pattern or array.join() for better performance'
-              ));
-            }
+        // Check for += in loops
+        if (operator === ts.SyntaxKind.PlusEqualsToken || operator === ts.SyntaxKind.EqualsToken) {
+          const right = node.right;
+
+          if (this.isInLoop(node) && ts.isBinaryExpression(right)) {
+            findings.push(this.createFinding(
+              context,
+              'String concatenation in loop detected - use array join or template literals',
+              node,
+              'Use StringBuilder pattern or array.join() for better performance'
+            ));
+          }
+        }
+
+        // Check for repeated string concatenation chains
+        if (operator === ts.SyntaxKind.PlusToken) {
+          const chainLength = this.countConcatChain(node);
+          if (chainLength > 5) {
+            findings.push(this.createFinding(
+              context,
+              `Long string concatenation chain (${chainLength} operations) - consider template literals`,
+              node,
+              'Use template literals or array.join() for better readability and performance'
+            ));
           }
         }
       }
 
-      // Check for repeated string concatenation chains
-      if (kind === 'BinaryExpression') {
-        const chainLength = this.countConcatChain(node);
-        if (chainLength > 5) {
-          findings.push(this.createFinding(
-            context,
-            `Long string concatenation chain (${chainLength} operations) - consider template literals`,
-            node,
-            'Use template literals or array.join() for better readability and performance'
-          ));
-        }
-      }
-    });
+      ts.forEachChild(node, checkNode);
+    };
+
+    checkNode(context.sourceFile);
 
     return findings;
   }
 
-  private isInLoop(node: any): boolean {
-    let parent = node.getParent?.();
+  private isInLoop(node: ts.Node): boolean {
+    let parent = node.parent;
     while (parent) {
-      const kind = parent.getKindName?.() || '';
-      if (['ForStatement', 'WhileStatement', 'ForInStatement', 'ForOfStatement', 'DoStatement'].includes(kind)) {
+      if (ts.isForStatement(parent) || ts.isWhileStatement(parent) ||
+          ts.isForInStatement(parent) || ts.isForOfStatement(parent) || ts.isDoStatement(parent)) {
         return true;
       }
-      parent = parent.getParent?.();
+      parent = parent.parent;
     }
     return false;
   }
 
-  private countConcatChain(node: any): number {
+  private countConcatChain(node: ts.BinaryExpression): number {
     let count = 0;
-    let current: any = node;
-    
-    while (current) {
-      const kind = current.getKindName?.() || '';
-      if (kind === 'BinaryExpression') {
-        const op = current.getOperatorToken?.()?.getText?.();
-        if (op === '+') {
-          count++;
-          const right = current.getRight?.();
-          if (right) {
-            current = right.getKindName?.() === 'BinaryExpression' ? right : null;
-          } else {
-            current = null;
-          }
-        } else {
-          break;
-        }
-      } else {
-        break;
-      }
+    let current: ts.Expression | undefined = node;
+
+    while (current && ts.isBinaryExpression(current) && current.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+      count++;
+      current = current.right;
     }
-    
+
     return count;
   }
 }

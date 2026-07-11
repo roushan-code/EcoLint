@@ -2,7 +2,10 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { logger } from './infrastructure/logger.js';
-import benchmarkRouter from './routes/benchmark.js';
+import { createBenchmarkRoutes } from './routes/benchmark.js';
+import optimizationRouter from './routes/optimization.js';
+import analysisRouter from './routes/analysis.js';
+import { BenchmarkService } from './services/benchmarkService.js';
 
 export const app: Express = express();
 
@@ -25,8 +28,21 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Initialize services and routes
+const benchmarkService = new BenchmarkService({
+  e2b: {
+    apiKey: process.env.E2B_API_KEY || '',
+    timeout: parseInt(process.env.SANDBOX_TIMEOUT || '30000', 10),
+    maxMemory: parseInt(process.env.SANDBOX_MAX_MEMORY || '512', 10),
+  },
+  gridCarbonIntensity: parseInt(process.env.GRID_CARBON_INTENSITY || '450', 10),
+});
+const benchmarkRouter = createBenchmarkRoutes(benchmarkService);
+
 // API routes
 app.use('/api/benchmark', benchmarkRouter);
+app.use('/api/optimize', optimizationRouter);
+app.use('/api/analyze', analysisRouter);
 
 // Error handling
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

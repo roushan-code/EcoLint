@@ -2,6 +2,7 @@
  * Detects long functions
  */
 
+import * as ts from 'typescript';
 import { BaseRule } from './baseRule';
 import { RuleContext, Finding } from '../types';
 
@@ -14,25 +15,26 @@ export class LongFunctionsRule extends BaseRule {
     const findings: Finding[] = [];
     const maxLines = context.config.maxFunctionLines ?? 50;
 
-    const functions = context.sourceFile.getDescendantsOfKind(
-      context.sourceFile.getLanguageVariant() === 0 ? 193 : 194 // FunctionDeclaration/ArrowFunction
-    );
+    const findFunctions = (node: ts.Node): void => {
+      if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node)) {
+        const name = node.name?.text || 'anonymous';
+        const startLine = context.sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+        const endLine = context.sourceFile.getLineAndCharacterOfPosition(node.getEnd()).line + 1;
+        const lineCount = endLine - startLine + 1;
 
-    for (const func of functions) {
-      const name = func.getName?.() || 'anonymous';
-      const startLine = func.getStart?.() ? context.sourceFile.getLineAndColumnAt(func.getStart())[0] : 0;
-      const endLine = func.getEnd?.() ? context.sourceFile.getLineAndColumnAt(func.getEnd())[0] : 0;
-      const lineCount = endLine - startLine + 1;
-
-      if (lineCount > maxLines) {
-        findings.push(this.createFinding(
-          context,
-          `Function '${name}' has ${lineCount} lines (max: ${maxLines})`,
-          func,
-          'Consider breaking this function into smaller, more focused functions'
-        ));
+        if (lineCount > maxLines) {
+          findings.push(this.createFinding(
+            context,
+            `Function '${name}' has ${lineCount} lines (max: ${maxLines})`,
+            node,
+            'Consider breaking this function into smaller, more focused functions'
+          ));
+        }
       }
-    }
+      ts.forEachChild(node, findFunctions);
+    };
+
+    findFunctions(context.sourceFile);
 
     return findings;
   }

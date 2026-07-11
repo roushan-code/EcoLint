@@ -24,9 +24,26 @@ export class BenchmarkCommand {
     }
 
     const document = editor.document;
-    const code = document.getText();
     const language = document.languageId;
     const fileName = document.fileName;
+
+    // Skip only clearly non-code files (output panels, etc.)
+    const invalidLanguages = ['code-runner-output'];
+    const invalidExtensions = ['.log', '.txt', '.md', '.json', '.yaml', '.yml', '.xml', '.html', '.css'];
+    
+    if (invalidLanguages.includes(language) || invalidExtensions.some(ext => fileName.endsWith(ext))) {
+      this.logger.warn('Skipping non-code file', { language, fileName });
+      void window.showInformationMessage('Please open a code file to benchmark');
+      return;
+    }
+
+    const code = document.getText();
+    
+    if (!code.trim()) {
+      this.logger.warn('Empty file');
+      void window.showInformationMessage('The file is empty');
+      return;
+    }
 
     this.outputChannel.appendLine(`[EcoLint] Running benchmarks for ${language} code...`);
     this.outputChannel.appendLine(`File: ${fileName}`);

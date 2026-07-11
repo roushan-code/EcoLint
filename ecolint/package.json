@@ -3,7 +3,7 @@
   "displayName": "EcoLint",
   "description": "AI-powered code analysis, benchmarking, and optimization for VS Code",
   "version": "1.0.0",
-  "publisher": "ecolint",
+  "publisher": "ecolint-team",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -22,7 +22,9 @@
     "onCommand:ecolint.analyze",
     "onCommand:ecolint.benchmark",
     "onCommand:ecolint.optimize",
-    "onCommand:ecolint.generatePullRequest"
+    "onCommand:ecolint.generatePullRequest",
+    "onCommand:ecolint.validate",
+    "onCommand:ecolint.runOptimization"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -75,6 +77,18 @@
         "title": "EcoLint: Generate Pull Request",
         "category": "EcoLint",
         "description": "Generate a pull request with analysis results"
+      },
+      {
+        "command": "ecolint.validate",
+        "title": "EcoLint: Validate",
+        "category": "EcoLint",
+        "description": "Validate optimized code by running compilation, linting, and tests"
+      },
+      {
+        "command": "ecolint.runOptimization",
+        "title": "EcoLint: Run Full Optimization",
+        "category": "EcoLint",
+        "description": "Run the complete optimization workflow with analysis, benchmarking, and validation"
       }
     ],
     "viewsContainers": {
@@ -106,24 +120,7 @@
       ]
     },
     "menus": {
-      "commandPalette": [
-        {
-          "command": "ecolint.analyze",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "ecolint.benchmark",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "ecolint.optimize",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "ecolint.generatePullRequest",
-          "when": "editorTextFocus"
-        }
-      ],
+      "commandPalette": [],
       "view/title": [
         {
           "command": "ecolint.analyze",

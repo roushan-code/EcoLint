@@ -1,72 +1,88 @@
 /**
  * Benchmark Routes
- * API endpoints for code execution benchmarking
+ * 
+ * REST API endpoints for code benchmarking and carbon estimation.
  */
 
 import { Router, Request, Response } from 'express';
-import { z } from 'zod';
 import { BenchmarkService } from '../services/benchmarkService';
+import { BenchmarkRequest } from '../types/benchmark';
 import { logger } from '../infrastructure/logger';
 
-const router = Router();
+export function createBenchmarkRoutes(benchmarkService: BenchmarkService): Router {
+  const router = Router();
 
-// Validation schema
-const benchmarkSchema = z.object({
-  code: z.string().min(1),
-  language: z.string().min(1),
-  timeout: z.number().optional(),
-});
+  /**
+   * POST /api/benchmark
+   * Execute a code benchmark
+   */
+  router.post('/', async (req: Request, res: Response) => {
+    try {
+      const request: BenchmarkRequest = req.body;
 
-/**
- * POST /api/benchmark
- * Execute code and return benchmark results
- */
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const validation = benchmarkSchema.safeParse(req.body);
-    
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        error: 'Invalid request body',
-        details: validation.error.issues,
+      if (!request.code || !request.language) {
+        res.status(400).json({
+          error: 'Missing required fields: code and language are required',
+        });
+        return;
+      }
+
+      const report = await benchmarkService.executeBenchmark(request);
+      res.json(report);
+    } catch (error) {
+      logger.error('Benchmark execution failed', { error });
+      res.status(500).json({
+        error: 'Benchmark execution failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
-      return;
     }
-
-    const { code, language, timeout } = validation.data;
-    
-    logger.info(`Benchmark request for language: ${language}`);
-    
-    const result = await BenchmarkService.executeBenchmark({
-      code,
-      language,
-      timeout,
-    });
-
-    res.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    logger.error('Benchmark error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Benchmark failed',
-    });
-  }
-});
-
-/**
- * GET /api/benchmark/languages
- * Get list of supported languages
- */
-router.get('/languages', (_req: Request, res: Response) => {
-  const languages = BenchmarkService.getSupportedLanguages();
-  res.json({
-    success: true,
-    data: languages,
   });
-});
 
-export default router;
+  /**
+   * GET /api/benchmark/languages
+   * Get list of supported languages
+   */
+  router.get('/languages', (_req: Request, res: Response) => {
+    const languages = benchmarkService.getSupportedLanguages();
+    res.json(languages);
+  });
+
+  /**
+   * POST /api/benchmark/compare
+   * Compare two benchmark reports
+   */
+  router.post('/compare', (req: Request, res: Response) => {
+    try {
+      const { benchmarkA, benchmarkB } = req.body;
+
+      if (!benchmarkA || !benchmarkB) {
+        res.status(400).json({
+          error: 'Both benchmarkA and benchmarkB are required',
+        });
+        return;
+      }
+
+      const comparison = benchmarkService.compareBenchmarks(benchmarkA, benchmarkB);
+      res.json(comparison);
+    } catch (error) {
+      logger.error('Benchmark comparison failed', { error });
+      res.status(500).json({
+        error: 'Benchmark comparison failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  /**
+   * GET /api/benchmark/config
+   * Get benchmark service configuration
+   */
+  router.get('/config', (_req: Request, res: Response) => {
+    res.json({
+      e2bConfigured: benchmarkService.isE2BConfigured(),
+      carbonEstimator: benchmarkService.getCarbonEstimatorConfig(),
+    });
+  });
+
+  return router;
+}

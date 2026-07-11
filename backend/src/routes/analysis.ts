@@ -9,6 +9,7 @@ const router = Router();
 const analysisSchema = z.object({
   code: z.string().min(1),
   language: z.string().min(1),
+  fileName: z.string().optional(),
   options: z.object({
     includePerformanceMetrics: z.boolean().optional(),
     includeSecurityChecks: z.boolean().optional(),
@@ -16,7 +17,7 @@ const analysisSchema = z.object({
   }).optional(),
 });
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const validation = analysisSchema.safeParse(req.body);
     
@@ -26,7 +27,8 @@ router.post('/', async (req: Request, res: Response) => {
         error: validation.error.message,
         timestamp: new Date().toISOString(),
       };
-      return res.status(400).json(response);
+      res.status(400).json(response);
+      return;
     }
 
     const { code, language, options } = validation.data as AnalysisRequest;

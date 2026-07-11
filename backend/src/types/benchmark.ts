@@ -1,168 +1,166 @@
 /**
  * Benchmark Types
- * Complete type definitions for the benchmark engine
+ * 
+ * Type definitions for the benchmark engine.
  */
 
-/**
- * Supported programming languages for benchmarking
- */
-export interface LanguageConfig {
+export interface BenchmarkRequest {
+  /** Name of the benchmark (optional, auto-generated if not provided) */
+  name?: string;
+  /** Programming language of the code */
+  language: string;
+  /** Source code to execute */
+  code: string;
+  /** Execution timeout in milliseconds (default: 30000) */
+  timeout?: number;
+  /** Additional metadata */
+  metadata?: Record<string, unknown>;
+}
+
+export interface BenchmarkReport {
+  /** Unique identifier */
+  id: string;
+  /** Benchmark name */
   name: string;
+  /** Programming language */
+  language: string;
+  /** Execution time in milliseconds */
+  runtimeMs: number;
+  /** Average CPU usage percentage */
+  cpuPercent: number;
+  /** Peak memory usage in MB */
+  memoryMB: number;
+  /** Estimated power consumption in Watts */
+  estimatedPowerW: number;
+  /** Estimated energy consumption in Watt-hours */
+  estimatedEnergyWh: number;
+  /** Estimated carbon emissions in grams */
+  estimatedCarbonGrams: number;
+  /** Standard output from execution */
+  stdout: string;
+  /** Standard error from execution */
+  stderr: string;
+  /** Process exit code */
+  exitCode: number;
+  /** Timestamp of execution */
+  timestamp: string;
+  /** Additional metadata */
+  metadata?: Record<string, unknown>;
+}
+
+export interface SandboxExecutionResult {
+  /** Standard output */
+  stdout: string;
+  /** Standard error */
+  stderr: string;
+  /** Process exit code */
+  exitCode: number;
+  /** Execution time in milliseconds */
+  runtime: number;
+  /** Peak memory in MB */
+  peakMemory: number;
+  /** Average CPU percentage */
+  averageCpu: number;
+  /** Metric snapshots */
+  metrics: MetricSnapshot[];
+}
+
+export interface MetricSnapshot {
+  /** Timestamp of the snapshot */
+  timestamp: number;
+  /** CPU usage percentage */
+  cpuPercent: number;
+  /** Memory usage in MB */
+  memoryMB: number;
+}
+
+export interface CarbonEstimate {
+  /** Power consumption in Watts */
+  powerWatts: number;
+  /** Energy consumption in Watt-hours */
+  energyWattHours: number;
+  /** Carbon emissions in grams */
+  carbonGrams: number;
+}
+
+export interface BenchmarkComparison {
+  /** First benchmark ID */
+  benchmarkA: string;
+  /** Second benchmark ID */
+  benchmarkB: string;
+  /** Runtime difference in ms */
+  runtimeDiffMs: number;
+  /** Runtime difference percentage */
+  runtimeDiffPercent: number;
+  /** Memory difference in MB */
+  memoryDiffMB: number;
+  /** Carbon difference in grams */
+  carbonDiffGrams: number;
+  /** Winner ('a', 'b', or 'tie') */
+  winner: 'a' | 'b' | 'tie';
+}
+
+export interface BenchmarkHistory {
+  /** List of benchmark reports */
+  benchmarks: BenchmarkReport[];
+  /** Total count */
+  total: number;
+  /** Pagination info */
+  page: number;
+  /** Page size */
+  pageSize: number;
+}
+
+export interface LanguageConfig {
+  /** Language name */
+  name: string;
+  /** File extension */
   extension: string;
+  /** Command to run */
   command: string;
+  /** Command arguments */
   args: string[];
 }
 
-/**
- * Map of supported languages with their execution configurations
- */
-export const SUPPORTED_LANGUAGES: Record<string, LanguageConfig> = {
+export const SUPPORTED_LANGUAGES: Record<string, Omit<LanguageConfig, 'name'>> = {
+  python: {
+    extension: 'py',
+    command: 'python3',
+    args: ['{{file}}'],
+  },
   javascript: {
-    name: 'JavaScript',
     extension: 'js',
     command: 'node',
     args: ['{{file}}'],
   },
   typescript: {
-    name: 'TypeScript',
     extension: 'ts',
     command: 'npx',
-    args: ['tsx', '{{file}}'],
-  },
-  python: {
-    name: 'Python',
-    extension: 'py',
-    command: 'python3',
-    args: ['{{file}}'],
+    args: ['ts-node', '{{file}}'],
   },
   go: {
-    name: 'Go',
     extension: 'go',
     command: 'go',
     args: ['run', '{{file}}'],
   },
   rust: {
-    name: 'Rust',
     extension: 'rs',
     command: 'rustc',
     args: ['{{file}}', '-o', '{{output}}'],
   },
+  java: {
+    extension: 'java',
+    command: 'java',
+    args: ['{{file}}'],
+  },
+  c: {
+    extension: 'c',
+    command: 'gcc',
+    args: ['{{file}}', '-o', '{{output}}'],
+  },
+  cpp: {
+    extension: 'cpp',
+    command: 'g++',
+    args: ['{{file}}', '-o', '{{output}}'],
+  },
 };
-
-/**
- * Request to start a benchmark
- */
-export interface BenchmarkRequest {
-  code: string;
-  language: string;
-  timeout?: number;
-  name?: string;
-  metadata?: Record<string, unknown>;
-}
-
-/**
- * Raw execution result from sandbox
- */
-export interface SandboxExecutionResult {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-  runtime: number;
-  peakMemory: number;
-  averageCpu: number;
-  metrics: MetricSnapshot[];
-}
-
-/**
- * Snapshot of metrics at a point in time
- */
-export interface MetricSnapshot {
-  timestamp: number;
-  cpuPercent: number;
-  memoryMB: number;
-}
-
-/**
- * Carbon estimation result
- */
-export interface CarbonEstimate {
-  powerWatts: number;
-  energyWattHours: number;
-  carbonGrams: number;
-  gridCarbonIntensity: number;
-}
-
-/**
- * Complete benchmark report with all metrics
- */
-export interface BenchmarkReport {
-  id: string;
-  name: string;
-  language: string;
-  runtimeMs: number;
-  cpuPercent: number;
-  memoryMB: number;
-  estimatedPowerW: number;
-  estimatedEnergyWh: number;
-  estimatedCarbonGrams: number;
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-  timestamp: string;
-  metadata?: Record<string, unknown>;
-}
-
-/**
- * Request to compare multiple benchmarks
- */
-export interface CompareRequest {
-  ids: string[];
-}
-
-/**
- * Comparison result between benchmarks
- */
-export interface CompareResult {
-  benchmarks: BenchmarkReport[];
-  comparison: {
-    fastestId: string;
-    slowestId: string;
-    mostEfficientId: string;
-    lowestCarbonId: string;
-    differences: {
-      runtimeDiff: number;
-      energyDiff: number;
-      carbonDiff: number;
-    };
-  };
-}
-
-/**
- * Export format options
- */
-export type ExportFormat = 'json' | 'csv';
-
-/**
- * Carbon estimator interface - allows replacement with ML model later
- */
-export interface CarbonEstimator {
-  /**
-   * Estimate carbon footprint from benchmark metrics
-   */
-  estimate(
-    runtimeMs: number,
-    cpuPercent: number,
-    memoryMB: number
-  ): CarbonEstimate;
-}
-
-/**
- * Storage interface for benchmark persistence
- */
-export interface BenchmarkStorage {
-  save(report: BenchmarkReport): Promise<void>;
-  getById(id: string): Promise<BenchmarkReport | null>;
-  getAll(): Promise<BenchmarkReport[]>;
-  delete(id: string): Promise<boolean>;
-  clear(): Promise<void>;
-}

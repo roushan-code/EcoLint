@@ -2,6 +2,7 @@
  * Detects deep nesting
  */
 
+import * as ts from 'typescript';
 import { BaseRule } from './baseRule';
 import { RuleContext, Finding } from '../types';
 
@@ -14,37 +15,37 @@ export class DeepNestingRule extends BaseRule {
     const findings: Finding[] = [];
     const maxDepth = context.config.maxNestingDepth ?? 4;
 
-    context.sourceFile.forEachDescendant((node: any) => {
-      const depth = this.calculateNestingDepth(node);
-      if (depth > maxDepth) {
+    const checkNesting = (node: ts.Node, _depth: number): void => {
+      const currentDepth = this.getNestingDepth(node);
+      if (currentDepth > maxDepth) {
         findings.push(this.createFinding(
           context,
-          `Code nesting depth is ${depth} (max: ${maxDepth})`,
+          `Code nesting depth is ${currentDepth} (max: ${maxDepth})`,
           node,
           'Consider refactoring with early returns or extracting to separate functions'
         ));
       }
-    });
+      ts.forEachChild(node, (child) => checkNesting(child, currentDepth));
+    };
+
+    checkNesting(context.sourceFile, 0);
 
     return findings;
   }
 
-  private calculateNestingDepth(node: any): number {
+  private getNestingDepth(node: ts.Node): number {
     let depth = 0;
-    let current = node.getParent?.();
+    let current = node.parent;
     
-    const nestingKinds = [
-      'IfStatement', 'ElseClause', 'ForStatement', 'WhileStatement', 
-      'DoStatement', 'ForInStatement', 'ForOfStatement', 'TryStatement',
-      'CatchClause', 'WithStatement', 'SwitchStatement', 'CaseClause'
-    ];
-
     while (current) {
-      const kind = current.getKindName?.() || '';
-      if (nestingKinds.includes(kind)) {
+      if (ts.isIfStatement(current) || ts.isForStatement(current) || 
+          ts.isWhileStatement(current) || ts.isDoStatement(current) ||
+          ts.isForInStatement(current) || ts.isForOfStatement(current) ||
+          ts.isTryStatement(current) || ts.isCatchClause(current) ||
+          ts.isWithStatement(current) || ts.isSwitchStatement(current)) {
         depth++;
       }
-      current = current.getParent?.();
+      current = current.parent;
     }
 
     return depth;

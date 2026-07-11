@@ -81,12 +81,22 @@ export interface OptimizationRequest {
   goal: 'performance' | 'memory' | 'readability' | 'balanced';
 }
 
+export interface OptimizationImprovement {
+  type: 'performance' | 'memory' | 'readability' | 'maintainability';
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  beforeMetric: number;
+  afterMetric: number;
+}
+
 export interface OptimizationResult {
+  id: string;
+  timestamp: Date;
+  fileName: string;
+  language: string;
   originalCode: string;
   optimizedCode: string;
-  improvements: string[];
-  tradeoffs: string[];
-  score: number;
+  improvements: OptimizationImprovement[];
 }
 
 export interface GitHubAnalysisRequest {

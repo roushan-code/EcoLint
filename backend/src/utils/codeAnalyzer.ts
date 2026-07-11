@@ -44,7 +44,49 @@ export function analyzeCode(code: string, language: string): AnalysisResult {
         rule: 'max-len',
       });
     }
+    
+    // Check for for loops (potential optimization opportunity)
+    if (line.includes('for') && line.includes('let')) {
+      issues.push({
+        severity: 'info',
+        line: lineNum,
+        column: line.indexOf('for'),
+        message: 'Consider using array methods (reduce, forEach, map) instead of for loops for better readability',
+        rule: 'prefer-array-methods',
+      });
+    }
+    
+    // Check for nested for loops
+    if (line.includes('for') && code.includes('for') && code.indexOf('for', code.indexOf('for') + 1) !== -1) {
+      const nestedForIndex = code.indexOf('for', code.indexOf('for') + 1);
+      const lineOfNested = code.substring(0, nestedForIndex).split('\n').length;
+      if (lineOfNested === lineNum) {
+        issues.push({
+          severity: 'warning',
+          line: lineNum,
+          column: line.indexOf('for'),
+          message: 'Nested for loops detected - consider optimizing for better performance',
+          rule: 'no-nested-loops',
+        });
+      }
+    }
   });
+  
+  // Check for recursive functions
+  const functionMatches = code.match(/function\s+(\w+)/g) || [];
+  for (const match of functionMatches) {
+    const funcName = match.replace('function ', '');
+    const regex = new RegExp(`${funcName}\\s*\\(`);
+    if (regex.test(code)) {
+      issues.push({
+        severity: 'warning',
+        line: 1,
+        column: code.indexOf(match),
+        message: `Potential recursive function '${funcName}' detected - ensure proper termination condition`,
+        rule: 'no-recursive-functions',
+      });
+    }
+  }
 
   // Calculate basic metrics
   metrics.timeComplexity = estimateTimeComplexity(code);
@@ -81,7 +123,15 @@ export function analyzeCode(code: string, language: string): AnalysisResult {
 
 function estimateTimeComplexity(code: string): string {
   const nestedLoops = (code.match(/for\s*\([^)]*\)[^}]*for\s*\(/g) || []).length;
-  const recursiveCalls = (code.match(/function\s+\w+\s*\([^)]*\)\s*\{[^}]*\1/g) || []).length;
+  // Check for recursive function calls (function name followed by same name call)
+  const functionNames = code.match(/function\s+(\w+)/g) || [];
+  let recursiveCalls = 0;
+  for (const match of functionNames) {
+    const funcName = match.replace('function ', '');
+    if (code.includes(`${funcName}()`)) {
+      recursiveCalls++;
+    }
+  }
   
   if (nestedLoops >= 2 || recursiveCalls > 0) {
     return 'O(n²) or worse';

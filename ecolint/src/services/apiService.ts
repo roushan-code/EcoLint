@@ -6,6 +6,14 @@ interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+  timestamp?: string;
+}
+
+interface BackendResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  timestamp?: string;
 }
 
 export class ApiService {
@@ -20,7 +28,7 @@ export class ApiService {
   public async analyzeCode(code: string, language: string, fileName: string): Promise<ApiResponse<AnalysisResult>> {
     try {
       const endpoint = this.configService.getApiEndpoint();
-      const response = await fetch(`${endpoint}/api/analyze`, {
+      const response = await fetch(`${endpoint}/api/v1/analysis`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language, fileName }),
@@ -30,8 +38,11 @@ export class ApiService {
         return { success: false, error: `HTTP ${response.status}` };
       }
 
-      const data = await response.json() as AnalysisResult;
-      return { success: true, data };
+      const backendResponse = await response.json() as BackendResponse<AnalysisResult>;
+      if (!backendResponse.success || !backendResponse.data) {
+        return { success: false, error: backendResponse.error || 'Analysis failed' };
+      }
+      return { success: true, data: backendResponse.data };
     } catch (error) {
       this.logger.error('Analysis API call failed', error);
       return { success: false, error: String(error) };
@@ -41,7 +52,7 @@ export class ApiService {
   public async runBenchmark(code: string, language: string, fileName: string): Promise<ApiResponse<BenchmarkResult>> {
     try {
       const endpoint = this.configService.getApiEndpoint();
-      const response = await fetch(`${endpoint}/api/benchmark`, {
+      const response = await fetch(`${endpoint}/api/v1/benchmark`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language, fileName }),
@@ -62,7 +73,7 @@ export class ApiService {
   public async optimizeCode(code: string, language: string, fileName: string): Promise<ApiResponse<OptimizationResult>> {
     try {
       const endpoint = this.configService.getApiEndpoint();
-      const response = await fetch(`${endpoint}/api/optimize`, {
+      const response = await fetch(`${endpoint}/api/v1/optimization`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language, fileName }),

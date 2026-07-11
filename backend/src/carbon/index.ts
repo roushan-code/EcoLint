@@ -1,8 +1,10 @@
 /**
- * Carbon Estimation Module
+ * Carbon Module
  * 
- * Exports carbon estimation components for the benchmark system.
+ * Exports carbon estimation components.
  */
 
 export { CarbonEstimator } from './CarbonEstimator';
-export { FormulaCarbonEstimator, DEFAULT_GRID_CARBON_INTENSITY } from './FormulaCarbonEstimator';
+export { FormulaCarbonEstimator } from './FormulaCarbonEstimator';
+export type { FormulaCarbonEstimatorConfig } from './FormulaCarbonEstimator';
+export type { CarbonEstimate } from '../types/benchmark';

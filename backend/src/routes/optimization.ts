@@ -10,7 +10,7 @@ const router = Router();
 const optimizationSchema = z.object({
   code: z.string().min(1),
   language: z.string().min(1),
-  goal: z.enum(['performance', 'memory', 'readability', 'balanced']),
+  goal: z.enum(['performance', 'memory', 'readability', 'balanced']).optional().default('balanced'),
 });
 
 const aiOptimizationSchema = z.object({
@@ -20,7 +20,7 @@ const aiOptimizationSchema = z.object({
   context: z.string().optional(),
 });
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const validation = optimizationSchema.safeParse(req.body);
     
@@ -30,14 +30,17 @@ router.post('/', async (req: Request, res: Response) => {
         error: validation.error.message,
         timestamp: new Date().toISOString(),
       };
-      return res.status(400).json(response);
+      res.status(400).json(response);
+      return;
     }
 
     const { code, language, goal } = validation.data as OptimizationRequest;
+    const fileName = req.body.fileName || '';
     
     logger.info('Optimizing code', { language, goal });
     
     const result: OptimizationResult = optimizeCode(code, language, goal);
+    result.fileName = fileName;
     
     const response: ApiResponse<OptimizationResult> = {
       success: true,

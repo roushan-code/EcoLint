@@ -1,11 +1,9 @@
 export interface AnalysisResult {
-  id: string;
-  timestamp: Date;
-  fileName: string;
-  language: string;
+  score?: number;
   issues: Issue[];
   suggestions: Suggestion[];
-  metrics: CodeMetrics;
+  metrics: PerformanceMetrics;
+  timestamp: string;
 }
 
 export interface Issue {
@@ -34,6 +32,13 @@ export interface CodeMetrics {
   technicalDebt: number;
 }
 
+export interface PerformanceMetrics {
+  timeComplexity?: string;
+  spaceComplexity?: string;
+  estimatedExecutionTime?: number;
+  memoryUsage?: number;
+}
+
 export interface BenchmarkResult {
   id: string;
   timestamp: Date;
@@ -42,6 +47,7 @@ export interface BenchmarkResult {
   executionTime: number;
   memoryUsage: number;
   cpuUsage: number;
+  carbonUsage: number;
   comparisons: BenchmarkComparison[];
 }
 

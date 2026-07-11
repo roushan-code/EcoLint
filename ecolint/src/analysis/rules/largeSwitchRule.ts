@@ -2,6 +2,7 @@
  * Detects large switch statements
  */
 
+import * as ts from 'typescript';
 import { BaseRule } from './baseRule';
 import { RuleContext, Finding } from '../types';
 
@@ -14,23 +15,22 @@ export class LargeSwitchRule extends BaseRule {
     const findings: Finding[] = [];
     const maxCases = context.config.maxSwitchCases ?? 10;
 
-    context.sourceFile.forEachDescendant((node: any) => {
-      const kind = node.getKindName?.();
+    const checkNode = (node: ts.Node): void => {
+      if (ts.isSwitchStatement(node)) {
+        const clauses = node.caseBlock.clauses;
+        const caseCount = clauses.filter(ts.isCaseClause).length;
 
-      if (kind === 'SwitchStatement') {
-        const cases = this.getSwitchCases(node);
-        
-        if (cases.length > maxCases) {
+        if (caseCount > maxCases) {
           findings.push(this.createFinding(
             context,
-            `Switch statement has ${cases.length} cases (max: ${maxCases})`,
+            `Switch statement has ${caseCount} cases (max: ${maxCases})`,
             node,
             'Consider using a lookup object/map or polymorphism for better maintainability'
           ));
         }
 
         // Check for switch statements that could be replaced with objects
-        if (cases.length > 3 && this.couldBeObjectPattern(node)) {
+        if (caseCount > 3 && this.couldBeObjectPattern(node)) {
           findings.push(this.createFinding(
             context,
             'Switch statement could potentially be replaced with a lookup object',
@@ -39,40 +39,28 @@ export class LargeSwitchRule extends BaseRule {
           ));
         }
       }
-    });
+
+      ts.forEachChild(node, checkNode);
+    };
+
+    checkNode(context.sourceFile);
 
     return findings;
   }
 
-  private getSwitchCases(node: any): any[] {
-    const cases: any[] = [];
-    const clauses = node.getClauses?.() || node.getCaseBlock?.()?.getCases?.() || [];
-    
-    for (const clause of clauses) {
-      if (clause.getKindName?.() === 'CaseClause') {
-        cases.push(clause);
-      }
-    }
-    
-    return cases;
-  }
-
-  private couldBeObjectPattern(node: any): boolean {
-    // Check if all cases return/assign simple values
-    const cases = this.getSwitchCases(node);
+  private couldBeObjectPattern(node: ts.SwitchStatement): boolean {
+    const clauses = node.caseBlock.clauses.filter(ts.isCaseClause);
     let simpleValueCount = 0;
 
-    for (const caseNode of cases) {
-      const statements = caseNode.getStatements?.() || [];
-      if (statements.length === 1) {
-        const stmt = statements[0];
-        const kind = stmt.getKindName?.();
-        if (kind === 'ReturnStatement' || kind === 'ExpressionStatement') {
+    for (const clause of clauses) {
+      if (clause.statements.length === 1) {
+        const stmt = clause.statements[0];
+        if (stmt && (ts.isReturnStatement(stmt) || ts.isExpressionStatement(stmt))) {
           simpleValueCount++;
         }
       }
     }
 
-    return simpleValueCount > cases.length * 0.7;
+    return simpleValueCount > clauses.length * 0.7;
   }
 }
