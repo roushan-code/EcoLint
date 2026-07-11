@@ -1,0 +1,160 @@
+{
+  "name": "ecolint",
+  "displayName": "EcoLint",
+  "description": "AI-powered code analysis, benchmarking, and optimization for VS Code",
+  "version": "1.0.0",
+  "publisher": "ecolint",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "code analysis",
+    "optimization",
+    "benchmark",
+    "linting"
+  ],
+  "activationEvents": [
+    "onView:ecolint.activity",
+    "onCommand:ecolint.analyze",
+    "onCommand:ecolint.benchmark",
+    "onCommand:ecolint.optimize",
+    "onCommand:ecolint.generatePullRequest"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "EcoLint",
+      "properties": {
+        "ecolint.apiEndpoint": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "API endpoint for EcoLint backend"
+        },
+        "ecolint.enableNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable desktop notifications"
+        },
+        "ecolint.autoAnalyze": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically analyze code on save"
+        },
+        "ecolint.analysisTimeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Analysis timeout in milliseconds"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "ecolint.analyze",
+        "title": "EcoLint: Analyze",
+        "category": "EcoLint",
+        "description": "Analyze the current code for issues and suggestions"
+      },
+      {
+        "command": "ecolint.benchmark",
+        "title": "EcoLint: Benchmark",
+        "category": "EcoLint",
+        "description": "Run performance benchmarks on the current code"
+      },
+      {
+        "command": "ecolint.optimize",
+        "title": "EcoLint: Optimize",
+        "category": "EcoLint",
+        "description": "Optimize the current code"
+      },
+      {
+        "command": "ecolint.generatePullRequest",
+        "title": "EcoLint: Generate Pull Request",
+        "category": "EcoLint",
+        "description": "Generate a pull request with analysis results"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ecolint.activity",
+          "title": "EcoLint",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ecolint.activity": [
+        {
+          "id": "ecolint.tree.analysis",
+          "name": "Analysis Results",
+          "icon": "media/tree-analysis.svg"
+        },
+        {
+          "id": "ecolint.tree.benchmarks",
+          "name": "Benchmarks",
+          "icon": "media/tree-benchmark.svg"
+        },
+        {
+          "id": "ecolint.tree.optimizations",
+          "name": "Optimizations",
+          "icon": "media/tree-optimize.svg"
+        }
+      ]
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "ecolint.analyze",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "ecolint.benchmark",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "ecolint.optimize",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "ecolint.generatePullRequest",
+          "when": "editorTextFocus"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "ecolint.analyze",
+          "when": "view == ecolint.tree.analysis",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "dev": "vscode-dev-extension-starter",
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^3.0.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "typescript": "^5.3.3"
+  }
+}
