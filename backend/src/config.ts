@@ -7,6 +7,9 @@ interface Config {
   githubToken: string;
   sandboxTimeout: number;
   sandboxMaxMemory: number;
+  openaiApiKey: string;
+  openaiEndpoint: string;
+  openaiModelName: string;
 }
 
 function requireEnv(key: string, fallback?: string): string {
@@ -39,4 +42,7 @@ export const config: Config = {
   githubToken: requireEnv('GITHUB_TOKEN', ''),
   sandboxTimeout: requireEnvNumber('SANDBOX_TIMEOUT', 30000),
   sandboxMaxMemory: requireEnvNumber('SANDBOX_MAX_MEMORY', 512),
+  openaiApiKey: requireEnv('OPENAI_API_KEY', ''),
+  openaiEndpoint: requireEnv('OPENAI_ENDPOINT', 'https://api.openai.com/v1'),
+  openaiModelName: requireEnv('OPENAI_MODEL_NAME', 'gpt-4o-mini'),
 };

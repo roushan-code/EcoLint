@@ -2,6 +2,7 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { logger } from './infrastructure/logger.js';
+import benchmarkRouter from './routes/benchmark.js';
 
 export const app: Express = express();
 
@@ -23,6 +24,9 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// API routes
+app.use('/api/benchmark', benchmarkRouter);
 
 // Error handling
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

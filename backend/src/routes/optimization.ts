@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { optimizeCode } from '../utils/optimizer.js';
 import { OptimizationRequest, ApiResponse, OptimizationResult } from '../types/index.js';
 import { logger } from '../infrastructure/logger.js';
+import { aiOptimizeCode } from '../services/aiOptimizationService.js';
 
 const router = Router();
 
@@ -10,6 +11,13 @@ const optimizationSchema = z.object({
   code: z.string().min(1),
   language: z.string().min(1),
   goal: z.enum(['performance', 'memory', 'readability', 'balanced']),
+});
+
+const aiOptimizationSchema = z.object({
+  code: z.string().min(1),
+  language: z.string().min(1),
+  goal: z.enum(['performance', 'memory', 'readability', 'balanced']),
+  context: z.string().optional(),
 });
 
 router.post('/', async (req: Request, res: Response) => {
