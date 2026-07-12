@@ -1,92 +1,84 @@
 # EcoLint 🍃
 
-**Terminal-Based Performance, Security, & AI FinOps Optimizer**
+**AI-Powered FinOps Optimizer, Security Scanner, & VS Code Extension**
 
-EcoLint is a next-generation AI-powered CLI tool designed to drastically reduce the computational footprint of your code. By acting as an advanced FinOps engine, it intelligently analyzes your source code to optimize performance (speed, RAM, CPU cycles), calculate carbon and cost savings, and apply automated cybersecurity patches.
+EcoLint is a comprehensive suite of tools designed to drastically reduce the computational footprint of your code. By acting as an advanced FinOps engine, it intelligently analyzes your source code to optimize performance (speed, RAM, CPU cycles), calculate carbon and cost savings, and apply automated cybersecurity patches.
 
----
-
-## 🚀 Features
-
-- **🧠 Multi-Mode AI Optimization:**
-  - **Maximum Performance**: Strips formatting and readability to compress variables, implement bitwise operations, and maximize raw computational speed. *(C/C++ Aware: Aggressively replaces heavy includes like `<stdio.h>` with lightweight forward declarations).*
-  - **Balanced Production**: Achieves high-performance metrics while adhering strictly to clean architectural principles and human maintainability.
-  - **Educational Mode**: Provides optimized code alongside a deep, JSON-formatted technical breakdown explaining the complexity shifts (e.g., $O(N^2) \rightarrow O(N)$).
-
-- **🔒 Intelligent Security Scanner (SOLID Design):**
-  - Operates on a dedicated, decoupled `securityController`.
-  - Scans entire files for severe vulnerabilities (SQL Injections, XSS, Hardcoded Credentials).
-  - Pauses execution to explain the vulnerabilities to the user and offers 1-click automated security patches.
-
-- **📊 Eco Metrics & FinOps Telemetry:**
-  - Simulates the real-world impact of your code optimizations.
-  - Outputs visual metrics calculating **Runtime Latency Differential**, **Hardware Overhead (RAM)**, **Token Savings**, **Carbon Footprint Reduction (g CO2e)**, and **Cloud FinOps Cost Savings**.
-
-- **💬 Dynamic Custom Directives:**
-  - Allows you to override the engine with natural language rules (e.g., *"Do not remove comments"* or *"Use a HashMap instead of an Array"*).
+The EcoLint project is divided into two primary interfaces:
+1. **The VS Code Extension** (`/ecolint` & `/backend`)
+2. **The Terminal CLI Tool** (`/ecolint-cli`)
 
 ---
 
-## 🛠️ Installation & Setup
+## 💻 1. EcoLint for VS Code
 
-1. **Clone the repository:**
+The EcoLint VS Code extension brings our AI-powered code analysis, benchmarking, and optimization directly into your IDE. It communicates with a dedicated backend language server to provide real-time suggestions and automated refactoring.
+
+### ✨ Extension Features
+- **Analyze (`ecolint.analyze`)**: Analyzes the current code for performance bottlenecks and structural issues.
+- **Benchmark (`ecolint.benchmark`)**: Runs simulated performance benchmarks on the active file.
+- **Optimize (`ecolint.optimize`)**: Automatically optimizes the selected code inline.
+- **Generate Pull Request (`ecolint.generatePullRequest`)**: Generates a summary PR containing the analysis results and optimization justifications.
+- **Interactive UI**: Integrates directly into the VS Code Activity Bar with dedicated views for *Analysis Results*, *Benchmarks*, and *Optimizations*.
+
+### 🛠️ Extension Setup
+The VS Code extension requires the backend server to be running:
+1. **Start the Backend:**
    ```bash
-   git clone https://github.com/roushan-code/EcoLint.git
-   cd EcoLint/ecolint-cli
+   cd EcoLint/backend
+   npm install
+   npm run start # (or equivalent dev script)
    ```
-
-2. **Install dependencies:**
+2. **Install the Extension:**
    ```bash
+   cd EcoLint/ecolint
+   npm install
+   # Press F5 in VS Code to launch the Extension Development Host
+   ```
+*(Note: Ensure `ecolint.apiEndpoint` in your VS Code settings points to your running backend).*
+
+---
+
+## 🚀 2. EcoLint CLI
+
+The EcoLint CLI is a lightweight, terminal-based alternative for fast, pipeline-friendly optimizations.
+
+### ✨ CLI Features
+- **🧠 Multi-Mode AI Optimization:**
+  - **Maximum Performance**: Strips formatting and readability to compress variables and maximize raw computational speed. *(C/C++ Aware: Replaces heavy includes with lightweight forward declarations).*
+  - **Balanced Production**: Achieves high performance while adhering strictly to clean architectural principles.
+  - **Educational Mode**: Provides a JSON-formatted technical breakdown explaining the complexity shifts (e.g., $O(N^2) \rightarrow O(N)$).
+- **🔒 Intelligent Security Scanner (SOLID Design):** Scans entire files for severe vulnerabilities (SQL Injections, XSS) and offers 1-click automated security patches.
+- **📊 Eco Metrics Telemetry:** Simulates the real-world impact of your code optimizations (Latency, RAM, Carbon Reduction, Cost Savings).
+- **💬 Dynamic Custom Directives:** Override the engine with natural language rules (e.g., *"Do not remove comments"*).
+
+### 🛠️ CLI Setup & Usage
+1. **Installation:**
+   ```bash
+   cd EcoLint/ecolint-cli
    npm install
    ```
-
-3. **Configure Environment Variables:**
-   Create a `.env` file in the `ecolint-cli` directory and add your AI provider API Key:
+2. **Configuration:** Add your AI provider API Key to `ecolint-cli/.env`:
    ```env
    NVIDIA_API_KEY=your_api_key_here
    ```
-
-4. **Build the CLI:**
+3. **Usage:**
    ```bash
    npm run build
+   
+   # Optimize and secure a specific file
+   npm start -- --file ../test.c
+   
+   # Optimize a specific line range
+   npm start -- --file ../test.c --lines 10-25
    ```
 
 ---
 
-## 💻 Usage
+## 📚 Documentation
+For more in-depth architectural details, API documentation, and contribution guidelines, please refer to the `/docs` directory.
 
-EcoLint can be run interactively or targeted at specific files.
-
-### 1. File Optimization (Recommended)
-Pass a specific file to the CLI to optimize, scan for security, and overwrite:
-```bash
-npm start -- --file ../test.c
-```
-*(EcoLint will prompt you before applying any optimizations or security fixes to the original file).*
-
-### 2. Line-Specific Optimization
-Only want to optimize a specific poorly-written function? Use the `--lines` flag:
-```bash
-npm start -- --file ../test.c --lines 10-25
-```
-
-### 3. Interactive Snippet Mode
-If you run the CLI without arguments, it will open an interactive prompt allowing you to paste raw code directly into your terminal for quick optimization:
-```bash
-npm start
-```
-
----
-
-## 🧪 Testing
-
-The repository contains two dedicated test files to demonstrate the engine's capabilities:
-
-- **`vulnerable_test.py`**: Contains highly unoptimized `O(N^2)` loops and glaring security flaws (Hardcoded Secrets & SQL Injection). Run this file to see both the FinOps optimization and the Security Scanner in action.
-- **`test.c`**: Contains standard C code. Run this in *Maximum Performance* mode to watch the engine aggressively optimize standard library includes.
-
----
-
-## 🏗️ Architecture
-
-EcoLint is built with **Node.js, TypeScript, and `@clack/prompts`**. It follows **SOLID** architectural principles, heavily decoupling the file parsing (`fileController`), AI optimization (`aiController`), FinOps mathematics (`metrics`), and vulnerability patching (`securityController`) into distinct, maintainable modules.
+## 🧪 Testing the Pipeline
+You can test the core AI engine using the provided test files at the root of the repository:
+- **`vulnerable_test.py`**: Contains `O(N^2)` loops and glaring security flaws (Hardcoded Secrets & SQL Injection). Tests both the FinOps optimizer and the Security Scanner.
+- **`test.c`**: Contains standard C code. Tests the C/C++ specific include optimizations.
