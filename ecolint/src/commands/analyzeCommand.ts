@@ -24,20 +24,18 @@ export class AnalyzeCommand {
     }
 
     const document = editor.document;
+    const code = document.getText();
     const language = document.languageId;
     const fileName = document.fileName;
 
-    // Skip only clearly non-code files (output panels, etc.)
-    const invalidLanguages = ['code-runner-output'];
-    const invalidExtensions = ['.log', '.txt', '.md', '.json', '.yaml', '.yml', '.xml', '.html', '.css'];
+    const codeExts = ['.ts', '.js', '.tsx', '.jsx', '.py', '.java', '.c', '.cpp', '.go', '.rs', '.rb', '.php', '.swift', '.kt', '.cs', '.vue', '.svelte'];
+    const isCodeFile = codeExts.some(ext => fileName.endsWith(ext));
     
-    if (invalidLanguages.includes(language) || invalidExtensions.some(ext => fileName.endsWith(ext))) {
+    if (!isCodeFile) {
       this.logger.warn('Skipping non-code file', { language, fileName });
       void window.showInformationMessage('Please open a code file to analyze');
       return;
     }
-
-    const code = document.getText();
     
     if (!code.trim()) {
       this.logger.warn('Empty file');

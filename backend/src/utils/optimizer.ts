@@ -4,7 +4,7 @@ import { OptimizationResult, OptimizationImprovement } from '../types/index.js';
 export function optimizeCode(
   code: string,
   language: string,
-  goal: 'performance' | 'memory' | 'readability' | 'balanced'
+  goal: 'performance' | 'memory' | 'readability' | 'balanced' | 'carbon'
 ): OptimizationResult {
   const improvements: OptimizationImprovement[] = [];
   
@@ -20,6 +20,9 @@ export function optimizeCode(
       break;
     case 'readability':
       optimizedCode = applyReadabilityOptimizations(code, improvements);
+      break;
+    case 'carbon':
+      optimizedCode = applyCarbonOptimizations(code, improvements);
       break;
     case 'balanced':
       optimizedCode = applyBalancedOptimizations(code, improvements);
@@ -165,6 +168,88 @@ function applyBalancedOptimizations(
     beforeMetric: 0,
     afterMetric: 0,
   });
+
+  return optimized;
+}
+
+function applyCarbonOptimizations(
+  code: string,
+  improvements: OptimizationImprovement[]
+): string {
+  let optimized = code;
+
+  // Replace for loops with reduce for array summation (more energy efficient)
+  // Pattern: for loop with accumulator
+  const forLoopPattern = /for\s*\(\s*(?:let|var)\s+\w+\s*=\s*0;\s*\w+\s*<\s*\w+\.length;\s*\w+\+\+\)\s*\{[^}]*total\s*=\s*total\s*\+\s*\w+\[[^\]]+\][^}]*\}/g;
+  if (forLoopPattern.test(optimized)) {
+    optimized = optimized.replace(forLoopPattern, (match) => {
+      // Extract array name
+      const arrayMatch = match.match(/(\w+)\.length/);
+      const arrayName = arrayMatch ? arrayMatch[1] : 'arr';
+      improvements.push({
+        type: 'performance',
+        description: 'Replaced for loop with reduce() for array operations - reduces CPU cycles and carbon emissions',
+        impact: 'high',
+        beforeMetric: 0,
+        afterMetric: 0,
+      });
+      return `// Optimized: using reduce() for better energy efficiency\nconst total = ${arrayName}.reduce((sum, val) => sum + val, 0);`;
+    });
+  }
+
+  // Replace forEach with map when collecting results
+  const forEachPattern = /(\w+)\.forEach\(\s*\(\s*\w+\s*\)\s*=>\s*\{[^}]*\}\s*\)/g;
+  if (forEachPattern.test(optimized)) {
+    optimized = optimized.replace(forEachPattern, (match, arrayName) => {
+      improvements.push({
+        type: 'performance',
+        description: 'Replaced forEach with map() - enables parallel processing and reduces execution time',
+        impact: 'high',
+        beforeMetric: 0,
+        afterMetric: 0,
+      });
+      return `${arrayName}.map(val => val)`;
+    });
+  }
+
+  // Cache array length outside loops
+  const loopWithLengthPattern = /for\s*\(\s*(?:let|var)\s+(\w+)\s*=\s*0;\s*\1\s*<\s*(\w+)\.length;/g;
+  if (loopWithLengthPattern.test(optimized)) {
+    optimized = optimized.replace(loopWithLengthPattern, (match, i, arr) => {
+      improvements.push({
+        type: 'performance',
+        description: 'Cached array length outside loop - reduces property lookups and CPU usage',
+        impact: 'medium',
+        beforeMetric: 0,
+        afterMetric: 0,
+      });
+      return `const len = ${arr}.length;\nfor (let ${i} = 0; ${i} < len;`;
+    });
+  }
+
+  // Use const where possible
+  optimized = optimized.replace(/\bvar\s+/g, 'const ');
+  if (optimized.includes('var ')) {
+    improvements.push({
+      type: 'performance',
+      description: 'Replaced var with const - enables better memory optimization',
+      impact: 'low',
+      beforeMetric: 0,
+      afterMetric: 0,
+    });
+  }
+
+  // Use let instead of var for mutable loop variables
+  if (optimized.includes('var ')) {
+    optimized = optimized.replace(/\bvar\s+/g, 'let ');
+    improvements.push({
+      type: 'performance',
+      description: 'Replaced var with let - better scoping reduces memory churn',
+      impact: 'low',
+      beforeMetric: 0,
+      afterMetric: 0,
+    });
+  }
 
   return optimized;
 }

@@ -78,7 +78,7 @@ export interface BenchmarkSummary {
 export interface OptimizationRequest {
   code: string;
   language: string;
-  goal: 'performance' | 'memory' | 'readability' | 'balanced';
+  goal: 'performance' | 'memory' | 'readability' | 'balanced' | 'carbon';
 }
 
 export interface OptimizationImprovement {

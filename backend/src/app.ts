@@ -5,6 +5,7 @@ import { logger } from './infrastructure/logger.js';
 import { createBenchmarkRoutes } from './routes/benchmark.js';
 import optimizationRouter from './routes/optimization.js';
 import analysisRouter from './routes/analysis.js';
+import diffRouter from './routes/diff.js';
 import { BenchmarkService } from './services/benchmarkService.js';
 
 export const app: Express = express();
@@ -43,6 +44,7 @@ const benchmarkRouter = createBenchmarkRoutes(benchmarkService);
 app.use('/api/benchmark', benchmarkRouter);
 app.use('/api/optimize', optimizationRouter);
 app.use('/api/analyze', analysisRouter);
+app.use('/api/diff', diffRouter);
 
 // Error handling
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

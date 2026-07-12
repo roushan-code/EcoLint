@@ -1,6 +1,7 @@
-import { OutputChannel, window } from 'vscode';
+import { OutputChannel, window, workspace, Range, Position } from 'vscode';
 import { Logger } from '../infrastructure/logger.js';
 import { ApiService } from '../services/apiService.js';
+import { showDiffCommand } from './diffCommand.js';
 
 export class OptimizeCommand {
   private readonly logger: Logger;
@@ -36,9 +37,47 @@ export class OptimizeCommand {
       const response = await this.apiService.optimizeCode(code, language, fileName);
 
       if (response.success && response.data) {
+        const { optimizedCode, improvements } = response.data;
+        
         this.outputChannel.appendLine(`[EcoLint] Optimization complete!`);
-        this.outputChannel.appendLine(`Improvements: ${response.data.improvements.length}`);
-        this.logger.info('Optimize command completed', { language, fileName });
+        this.outputChannel.appendLine(`Improvements: ${improvements.length}`);
+        
+        // Show improvements in output
+        improvements.forEach((improvement, index) => {
+          this.outputChannel.appendLine(`  ${index + 1}. [${improvement.type.toUpperCase()}] ${improvement.description}`);
+        });
+        
+        // Check if there are actual changes
+        if (optimizedCode !== code) {
+          // Ask user if they want to apply the changes
+          const choice = await window.showInformationMessage(
+            `Found ${improvements.length} optimization(s). Would you like to see the diff?`,
+            'Show Diff',
+            'Apply All',
+            'Cancel'
+          );
+
+          if (choice === 'Show Diff') {
+            // Show diff view
+            await showDiffCommand(code, optimizedCode, fileName);
+          } else if (choice === 'Apply All') {
+            // Apply optimized code to editor
+            const fullRange = new Range(
+              new Position(0, 0),
+              document.positionAt(document.getText().length)
+            );
+            const edit = new (await import('vscode')).WorkspaceEdit();
+            edit.replace(document.uri, fullRange, optimizedCode);
+            await workspace.applyEdit(edit);
+            await document.save();
+            this.outputChannel.appendLine('[EcoLint] Optimized code applied!');
+            void window.showInformationMessage('EcoLint: Optimized code applied!');
+          }
+        } else {
+          this.outputChannel.appendLine('[EcoLint] No changes needed - code is already optimized!');
+        }
+        
+        this.logger.info('Optimize command completed', { language, fileName, improvementsCount: improvements.length });
       } else {
         this.outputChannel.appendLine(`[EcoLint] Optimization failed: ${response.error}`);
         this.logger.error('Optimization failed', response.error);

@@ -41,14 +41,18 @@ export interface PerformanceMetrics {
 
 export interface BenchmarkResult {
   id: string;
-  timestamp: Date;
-  fileName: string;
+  name: string;
   language: string;
-  executionTime: number;
-  memoryUsage: number;
-  cpuUsage: number;
-  carbonUsage: number;
-  comparisons: BenchmarkComparison[];
+  runtimeMs: number;
+  cpuPercent: number;
+  memoryMB: number;
+  estimatedPowerW: number;
+  estimatedEnergyWh: number;
+  estimatedCarbonGrams: number;
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  timestamp: string;
 }
 
 export interface BenchmarkComparison {

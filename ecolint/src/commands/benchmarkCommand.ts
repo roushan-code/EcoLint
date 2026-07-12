@@ -24,20 +24,18 @@ export class BenchmarkCommand {
     }
 
     const document = editor.document;
+    const code = document.getText();
     const language = document.languageId;
     const fileName = document.fileName;
 
-    // Skip only clearly non-code files (output panels, etc.)
-    const invalidLanguages = ['code-runner-output'];
-    const invalidExtensions = ['.log', '.txt', '.md', '.json', '.yaml', '.yml', '.xml', '.html', '.css'];
+    const codeExts = ['.ts', '.js', '.tsx', '.jsx', '.py', '.java', '.c', '.cpp', '.go', '.rs', '.rb', '.php', '.swift', '.kt', '.cs', '.vue', '.svelte'];
+    const isCodeFile = codeExts.some(ext => fileName.endsWith(ext));
     
-    if (invalidLanguages.includes(language) || invalidExtensions.some(ext => fileName.endsWith(ext))) {
+    if (!isCodeFile) {
       this.logger.warn('Skipping non-code file', { language, fileName });
       void window.showInformationMessage('Please open a code file to benchmark');
       return;
     }
-
-    const code = document.getText();
     
     if (!code.trim()) {
       this.logger.warn('Empty file');
@@ -54,9 +52,14 @@ export class BenchmarkCommand {
 
       if (response.success && response.data) {
         this.outputChannel.appendLine(`[EcoLint] Benchmark complete!`);
-        this.outputChannel.appendLine(`Execution time: ${response.data.executionTime}ms`);
-        this.outputChannel.appendLine(`Memory usage: ${response.data.memoryUsage}MB`);
-        this.outputChannel.appendLine(`Comparisons: ${response.data.comparisons.length}`);
+        this.outputChannel.appendLine(`Execution time: ${response.data.runtimeMs}ms`);
+        this.outputChannel.appendLine(`Memory usage: ${response.data.memoryMB}MB`);
+        this.outputChannel.appendLine(`Carbon emissions: ${response.data.estimatedCarbonGrams}g CO₂`);
+        this.outputChannel.appendLine(`Exit code: ${response.data.exitCode}`);
+        if (response.data.stdout) {
+          this.outputChannel.appendLine(`---`);
+          this.outputChannel.appendLine(`Output: ${response.data.stdout}`);
+        }
         this.logger.info('Benchmark command completed', { language, fileName });
       } else {
         this.outputChannel.appendLine(`[EcoLint] Benchmark failed: ${response.error}`);

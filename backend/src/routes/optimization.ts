@@ -10,13 +10,13 @@ const router = Router();
 const optimizationSchema = z.object({
   code: z.string().min(1),
   language: z.string().min(1),
-  goal: z.enum(['performance', 'memory', 'readability', 'balanced']).optional().default('balanced'),
+  goal: z.enum(['performance', 'memory', 'readability', 'balanced', 'carbon']).optional().default('carbon'),
 });
 
 const aiOptimizationSchema = z.object({
   code: z.string().min(1),
   language: z.string().min(1),
-  goal: z.enum(['performance', 'memory', 'readability', 'balanced']),
+  goal: z.enum(['performance', 'memory', 'readability', 'balanced', 'carbon']),
   context: z.string().optional(),
 });
 

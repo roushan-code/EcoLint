@@ -457,20 +457,20 @@ export class ValidationAgent {
             <tr><th>Metric</th><th>Original</th><th>Optimized</th><th>Improvement</th></tr>
             <tr>
               <td>Runtime</td>
-              <td>${comparison.original.executionTime.toFixed(2)} ms</td>
-              <td>${comparison.optimized.executionTime.toFixed(2)} ms</td>
+              <td>${comparison.original.runtimeMs.toFixed(2)} ms</td>
+              <td>${comparison.optimized.runtimeMs.toFixed(2)} ms</td>
               <td class="improvement">${comparison.improvement.runtimePercent.toFixed(1)}%</td>
             </tr>
             <tr>
               <td>Memory</td>
-              <td>${comparison.original.memoryUsage.toFixed(2)} MB</td>
-              <td>${comparison.optimized.memoryUsage.toFixed(2)} MB</td>
+              <td>${comparison.original.memoryMB.toFixed(2)} MB</td>
+              <td>${comparison.optimized.memoryMB.toFixed(2)} MB</td>
               <td class="improvement">${comparison.improvement.memoryPercent.toFixed(1)}%</td>
             </tr>
             <tr>
               <td>Carbon</td>
-              <td>${comparison.original.carbonUsage.toFixed(4)} g</td>
-              <td>${comparison.optimized.carbonUsage.toFixed(4)} g</td>
+              <td>${comparison.original.estimatedCarbonGrams.toFixed(4)} g</td>
+              <td>${comparison.optimized.estimatedCarbonGrams.toFixed(4)} g</td>
               <td class="improvement">${comparison.improvement.carbonPercent.toFixed(1)}%</td>
             </tr>
           </table>

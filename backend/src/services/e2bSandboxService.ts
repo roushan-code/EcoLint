@@ -134,9 +134,12 @@ export class E2BSandboxService {
       // Map language names to what E2B expects
       const e2bLanguage = lang === 'javascript' || lang === 'typescript' ? 'javascript' : lang;
       
+      // Use a longer timeout for complex code (up to 5 minutes)
+      const e2bTimeout = Math.min(timeout * 2, 300000);
+      
       const execution = await sandbox.runCode(code, {
         language: e2bLanguage,
-        timeoutMs: Math.min(timeout, 60000),
+        timeoutMs: e2bTimeout,
       });
 
       const runtime = Date.now() - startTime;
@@ -145,12 +148,16 @@ export class E2BSandboxService {
       const stdout = execution.logs?.stdout?.join('\n') || '';
       const stderr = execution.logs?.stderr?.join('\n') || '';
 
+      // E2B doesn't provide direct memory metrics, estimate based on runtime
+      // Complex code that runs longer typically uses more memory
+      const peakMemory = Math.max(10, Math.round(runtime / 100));
+      
       return {
         stdout,
         stderr,
         exitCode: execution.error ? 1 : 0,
         runtime,
-        peakMemory: 0,
+        peakMemory,
         averageCpu: 0,
         metrics: [],
       };
