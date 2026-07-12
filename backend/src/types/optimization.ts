@@ -1,6 +1,7 @@
 
 export interface OptimizationItem {
   type: string;
+  description: string;
   before: string;
   after: string;
   impact: 'high' | 'medium' | 'low';
@@ -9,7 +10,7 @@ export interface OptimizationItem {
 export interface OptimizationRequest {
   code: string;
   language: string;
-  goal?: 'performance' | 'memory' | 'readability' | 'balanced';
+  goal?: 'performance' | 'memory' | 'readability' | 'balanced' | 'carbon';
   context?: string;
   astAnalysis?: any;
   benchmarkReport?: any;

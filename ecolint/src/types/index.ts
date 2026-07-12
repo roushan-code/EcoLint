@@ -72,14 +72,26 @@ export interface OptimizationResult {
   originalCode: string;
   optimizedCode: string;
   improvements: OptimizationImprovement[];
+  carbonSavings?: CarbonSavings;
+  retries?: number;
 }
 
 export interface OptimizationImprovement {
-  type: 'performance' | 'memory' | 'readability' | 'maintainability';
+  type: 'performance' | 'carbon' | 'memory' | 'maintainability';
   description: string;
   impact: 'high' | 'medium' | 'low';
-  beforeMetric: number;
-  afterMetric: number;
+  beforeMetric?: number;
+  afterMetric?: number;
+}
+
+export interface CarbonSavings {
+  originalExecutionTime: number;
+  optimizedExecutionTime: number;
+  timeSavingsPercent: number;
+  originalMemory: number;
+  optimizedMemory: number;
+  memorySavingsPercent: number;
+  carbonSaved: number;
 }
 
 export interface PullRequestPayload {

@@ -10,6 +10,9 @@ interface Config {
   openaiApiKey: string;
   openaiEndpoint: string;
   openaiModelName: string;
+  // AI retry configuration
+  aiMaxRetries: number;
+  aiRetryDelayMs: number;
   // Benchmark configuration
   benchmarkTimeout: number;
   e2bApiKey: string;
@@ -49,6 +52,9 @@ export const config: Config = {
   openaiApiKey: requireEnv('OPENAI_API_KEY', ''),
   openaiEndpoint: requireEnv('OPENAI_ENDPOINT', 'https://api.openai.com/v1'),
   openaiModelName: requireEnv('OPENAI_MODEL_NAME', 'gpt-4o-mini'),
+  // AI retry configuration
+  aiMaxRetries: requireEnvNumber('AI_MAX_RETRIES', 3),
+  aiRetryDelayMs: requireEnvNumber('AI_RETRY_DELAY_MS', 1000),
   // Benchmark configuration
   benchmarkTimeout: requireEnvNumber('BENCHMARK_TIMEOUT', 30000),
   e2bApiKey: requireEnv('E2B_API_KEY', ''),

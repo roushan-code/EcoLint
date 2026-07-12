@@ -37,7 +37,7 @@ export class OptimizeCommand {
       const response = await this.apiService.optimizeCode(code, language, fileName);
 
       if (response.success && response.data) {
-        const { optimizedCode, improvements } = response.data;
+        const { optimizedCode, improvements, carbonSavings, retries } = response.data;
         
         this.outputChannel.appendLine(`[EcoLint] Optimization complete!`);
         this.outputChannel.appendLine(`Improvements: ${improvements.length}`);
@@ -46,6 +46,20 @@ export class OptimizeCommand {
         improvements.forEach((improvement, index) => {
           this.outputChannel.appendLine(`  ${index + 1}. [${improvement.type.toUpperCase()}] ${improvement.description}`);
         });
+        
+        // Show carbon savings if available
+        if (carbonSavings) {
+          this.outputChannel.appendLine('');
+          this.outputChannel.appendLine('[EcoLint] Carbon Savings:');
+          this.outputChannel.appendLine(`  Original execution time: ${carbonSavings.originalExecutionTime}ms`);
+          this.outputChannel.appendLine(`  Optimized execution time: ${carbonSavings.optimizedExecutionTime}ms`);
+          this.outputChannel.appendLine(`  Time savings: ${carbonSavings.timeSavingsPercent.toFixed(2)}%`);
+          this.outputChannel.appendLine(`  Carbon saved: ${carbonSavings.carbonSaved.toFixed(4)}g CO2`);
+        }
+        
+        if (retries !== undefined && retries > 0) {
+          this.outputChannel.appendLine(`  (Completed after ${retries + 1} attempt(s))`);
+        }
         
         // Check if there are actual changes
         if (optimizedCode !== code) {

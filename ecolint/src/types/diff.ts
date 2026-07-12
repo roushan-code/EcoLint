@@ -3,6 +3,7 @@ export interface DiffItem {
   type: 'add' | 'remove' | 'modify';
   originalLine?: string;
   newLine?: string;
+  explanation?: string;
 }
 
 export interface DiffSummary {

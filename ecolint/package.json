@@ -89,6 +89,24 @@
         "title": "EcoLint: Run Full Optimization",
         "category": "EcoLint",
         "description": "Run the complete optimization workflow with analysis, benchmarking, and validation"
+      },
+      {
+        "command": "ecolint.acceptAllChanges",
+        "title": "EcoLint: Accept All Changes",
+        "category": "EcoLint",
+        "description": "Accept all suggested code changes"
+      },
+      {
+        "command": "ecolint.rejectAllChanges",
+        "title": "EcoLint: Reject All Changes",
+        "category": "EcoLint",
+        "description": "Reject all suggested code changes"
+      },
+      {
+        "command": "ecolint.showDiff",
+        "title": "EcoLint: Show Diff",
+        "category": "EcoLint",
+        "description": "Show inline diff of suggested changes"
       }
     ],
     "viewsContainers": {

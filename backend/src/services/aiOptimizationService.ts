@@ -22,6 +22,11 @@ Focus on:
 
 Return ONLY valid JSON, no markdown formatting or additional text.`;
 
+// Retry configuration - uses values from config
+const MAX_RETRIES = config.aiMaxRetries;
+const BASE_RETRY_DELAY_MS = config.aiRetryDelayMs;
+const RETRYABLE_STATUS_CODES = [429, 503, 504];
+
 export class AIOptimizationService {
   private client: OpenAI | null = null;
 
@@ -40,46 +45,120 @@ export class AIOptimizationService {
     return this.client;
   }
 
+  /**
+   * Sleep for a given number of milliseconds
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Calculate exponential backoff delay
+   */
+  private getRetryDelay(attempt: number): number {
+    return BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
+  }
+
+  /**
+   * Check if an error is retryable (rate limit or service unavailable)
+   */
+  private isRetryableError(error: any): boolean {
+    if (error?.status) {
+      return RETRYABLE_STATUS_CODES.includes(error.status);
+    }
+    if (error?.code) {
+      return error.code === 'ResourceExhausted' || 
+             error.code === 'rate_limit_exceeded' ||
+             error.code === 'service_unavailable';
+    }
+    if (error?.message) {
+      const msg = error.message.toLowerCase();
+      return msg.includes('rate limit') || 
+             msg.includes('resourceexhausted') ||
+             msg.includes('service unavailable') ||
+             msg.includes('worker local total request limit');
+    }
+    return false;
+  }
+
   async optimize(request: OptimizationRequest): Promise<OptimizationResponse> {
     const { code, language, astAnalysis, benchmarkReport } = request;
 
     logger.info('Starting AI optimization', { language });
 
-    try {
-      const contextInfo = this.buildContextInfo(astAnalysis, benchmarkReport);
-      
-      const response = await this.getClient().chat.completions.create({
-        model: config.openaiModelName,
-        messages: [
-          { role: 'system', content: OPTIMIZATION_PROMPT },
-          { 
-            role: 'user', 
-            content: `Optimize this ${language} code for performance and carbon efficiency:\n\n\`\`\`${language}\n${code}\n\`\`\`\n\n${contextInfo}` 
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 4000,
-      });
-
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error('No response from OpenAI');
+    let lastError: Error | undefined;
+    
+    // Retry loop with exponential backoff
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return await this.executeOptimization(code, language, astAnalysis, benchmarkReport);
+      } catch (error: any) {
+        lastError = error;
+        
+        // Check if error is retryable
+        if (this.isRetryableError(error) && attempt < MAX_RETRIES) {
+          const delay = this.getRetryDelay(attempt);
+          logger.warn(`AI optimization failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}), retrying in ${delay}ms`, { 
+            error: error.message || error,
+            status: error?.status,
+            code: error?.code
+          });
+          await this.sleep(delay);
+        } else {
+          // Non-retryable error or max retries reached
+          logger.error('AI optimization failed', { 
+            error: error.message || error,
+            attempts: attempt + 1,
+            isRetryable: this.isRetryableError(error)
+          });
+          throw error;
+        }
       }
-
-      // Parse the JSON response
-      const cleanedContent = content.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
-      const result = JSON.parse(cleanedContent) as OptimizationResponse;
-
-      logger.info('AI optimization completed', { 
-        confidenceScore: result.confidenceScore,
-        optimizationsCount: result.optimizationSummary.length 
-      });
-
-      return result;
-    } catch (error) {
-      logger.error('AI optimization failed', { error });
-      throw error;
     }
+
+    // This should never be reached, but just in case
+    throw lastError || new Error('AI optimization failed after all retries');
+  }
+
+  /**
+   * Execute a single optimization request
+   */
+  private async executeOptimization(
+    code: string,
+    language: string,
+    astAnalysis?: any,
+    benchmarkReport?: any
+  ): Promise<OptimizationResponse> {
+    const contextInfo = this.buildContextInfo(astAnalysis, benchmarkReport);
+    
+    const response = await this.getClient().chat.completions.create({
+      model: config.openaiModelName,
+      messages: [
+        { role: 'system', content: OPTIMIZATION_PROMPT },
+        { 
+          role: 'user', 
+          content: `Optimize this ${language} code for performance and carbon efficiency:\n\n\`\`\`${language}\n${code}\n\`\`\`\n\n${contextInfo}` 
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 4000,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('No response from OpenAI');
+    }
+
+    // Parse the JSON response
+    const cleanedContent = content.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    const result = JSON.parse(cleanedContent) as OptimizationResponse;
+
+    logger.info('AI optimization completed', { 
+      confidenceScore: result.confidenceScore,
+      optimizationsCount: result.optimizationSummary.length 
+    });
+
+    return result;
   }
 
   private buildContextInfo(astAnalysis?: any, benchmarkReport?: any): string {
