@@ -128,6 +128,7 @@ export class SmartOptimizationService {
 
   /**
    * Optimize with sandbox and retry logic
+   * Fallback chain: E2B Sandbox → Local Execution → LLM-only Optimization
    */
   private async optimizeWithSandbox(
     code: string,
@@ -138,30 +139,63 @@ export class SmartOptimizationService {
     let lastError: string | undefined;
     const improvements: OptimizationImprovement[] = [];
 
-    // First, benchmark original code
-    const originalBenchmark = await this.benchmarkCode(code, language);
-    if (!originalBenchmark.success || !originalBenchmark.result) {
-      // If sandbox fails due to unsupported language, try LLM-only optimization
-      if (originalBenchmark.error?.includes('Unsupported language')) {
-        logger.info('Sandbox not available for language, using LLM-only optimization', { language });
-        return this.optimizeWithLLMOnly(code, language, goal);
+    // Step 1: Try E2B sandbox first
+    logger.info('Step 1: Trying E2B sandbox execution', { language });
+    const e2bAvailable = sandboxService.isE2BConfigured();
+    
+    if (e2bAvailable) {
+      const originalBenchmark = await this.benchmarkCode(code, language, 'e2b');
+      if (!originalBenchmark.success || !originalBenchmark.result) {
+        // E2B failed, move to local execution
+        logger.warn('E2B sandbox failed, falling back to local execution', { 
+          error: originalBenchmark.error 
+        });
+        lastError = originalBenchmark.error;
+      } else {
+        // E2B succeeded, proceed with optimization
+        return this.runOptimizationLoop(code, language, goal, 'e2b', originalBenchmark.result);
       }
-      return {
-        success: false,
-        originalCode: code,
-        optimizedCode: code,
-        language,
-        improvements: [],
-        error: `Original code failed to execute: ${originalBenchmark.error || 'Unknown error'}`,
-        retries: 0,
-      };
+    } else {
+      logger.info('E2B not configured, skipping to local execution');
     }
 
-    const originalResult = originalBenchmark.result;
+    // Step 2: Try local execution
+    logger.info('Step 2: Trying local execution', { language });
+    const localBenchmark = await this.benchmarkCode(code, language, 'local');
+    
+    if (!localBenchmark.success || !localBenchmark.result) {
+      // Local execution failed, move to LLM-only
+      logger.warn('Local execution failed, falling back to LLM-only optimization', { 
+        error: localBenchmark.error 
+      });
+      lastError = localBenchmark.error;
+    } else {
+      // Local succeeded, proceed with optimization
+      return this.runOptimizationLoop(code, language, goal, 'local', localBenchmark.result);
+    }
+
+    // Step 3: Fall back to LLM-only optimization (no sandbox)
+    logger.info('Step 3: Using LLM-only optimization (no sandbox)');
+    return this.optimizeWithLLMOnly(code, language, goal);
+  }
+
+  /**
+   * Run the optimization loop with sandbox benchmarking
+   */
+  private async runOptimizationLoop(
+    code: string,
+    language: string,
+    goal: 'performance' | 'carbon',
+    executionMode: 'e2b' | 'local',
+    originalResult: SandboxExecutionResult
+  ): Promise<SmartOptimizationResult> {
+    let currentCode = code;
+    let lastError: string | undefined;
+    const improvements: OptimizationImprovement[] = [];
 
     // Retry loop: LLM -> Sandbox -> Error? -> Retry (max 3)
     for (let retry = 0; retry < this.maxRetries; retry++) {
-      logger.info(`Optimization attempt ${retry + 1}/${this.maxRetries}`);
+      logger.info(`Optimization attempt ${retry + 1}/${this.maxRetries} (${executionMode})`);
 
       try {
         // Get LLM optimization with context about previous errors
@@ -178,7 +212,7 @@ export class SmartOptimizationService {
         );
 
         // Test optimized code in sandbox
-        const benchmarkResult = await this.benchmarkCode(result.optimizedCode, language);
+        const benchmarkResult = await this.benchmarkCode(result.optimizedCode, language, executionMode);
 
         if (benchmarkResult.success && benchmarkResult.result) {
           // Success! Calculate carbon savings
@@ -229,10 +263,12 @@ export class SmartOptimizationService {
 
   /**
    * Benchmark code in sandbox
+   * @param executionMode - 'e2b' or 'local' (currently unused, sandbox service handles this internally)
    */
   private async benchmarkCode(
     code: string,
-    language: string
+    language: string,
+    _executionMode: 'e2b' | 'local' = 'e2b'
   ): Promise<{ success: boolean; result?: SandboxExecutionResult; error?: string }> {
     try {
       const result = await sandboxService.executeInSandbox(code, language, 60000);

@@ -16,7 +16,7 @@ function getSystemPrompt(mode: OptMode): string {
       return `You are a high-performance optimization engine.
 Directive: Optimize the following code snippet for maximum speed, CPU cycles, and memory at all costs. Use high-performance algorithmic paradigms, bitwise operations, or advanced optimizations if necessary. 
 CRITICAL: You must preserve standard code formatting, indentation, and line breaks. Do not minify or squash the code into single lines.
-Return ONLY the raw optimized code without any markdown blocks or explanations.`;
+Return ONLY the raw optimized code without any markdown blocks or explanations don't change the .`;
     case 'balanced':
       return `You are a professional software engineer focusing on clean architecture.
 Directive: Significantly optimize performance metrics of the following code snippet, but ensure the resulting code strictly adheres to clean architectural principles, meaningful variable naming, and easy long-term maintainability for other engineers.
